@@ -3,4 +3,4 @@ Converts a YOLO format bounding box dataset to a segmentation version using Meta
 Tested with a dataset to be trained with yolov8.
 
 ## Installation
-This requires the ultralytics pip package, so you can just follow the installation instructions from the [Ultralytics Repository]([https://www.example.com](https://github.com/ultralytics/ultralytics)https://github.com/ultralytics/ultralytics)
+This requires the ultralytics pip package, so you can just follow the installation instructions from the [Ultralytics Repository](https://www.example.com](https://github.com/ultralytics/ultralytics)https://github.com/ultralytics/ultralytics)
