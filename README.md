@@ -8,3 +8,7 @@ This requires the ultralytics pip package, so you can just follow the installati
 
 ## Usage
 ``python bbox2seg.py IMAGE_DIRECTORY LABEL_DIRECTORY``
+
+* ``IMAGE_DIRECTORY``: Directory of images
+* ``LABEL_DIRECTORY``: Directory of corresponding labels in yolo bounding-box format
+* i.e ``images/train1.jpg`` has the corresponding label ``label/train1.txt``
