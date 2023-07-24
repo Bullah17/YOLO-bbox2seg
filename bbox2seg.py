@@ -32,7 +32,6 @@ def read_yolov4_labels(label_file_path, image_width, image_height):
 
 def get_image_size(image_path):
     image = cv2.imread(image_path)
-    print(image_path)
     image_height, image_width, _ = image.shape
     return image, image_width, image_height
 
