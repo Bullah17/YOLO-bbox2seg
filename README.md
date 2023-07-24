@@ -1,4 +1,4 @@
-# yolo_bbox2seg
+# YOLO-bbox2seg
 Converts a YOLO format bounding box dataset to a segmentation version using Meta's SAM (Segment Anything Network). This is a modification of the automatic annotation feature provided by ultralytics, but instead uses a pre-existing dataset to generate the masks instead of using trained weights. 
 
 Tested with a dataset to be trained with yolov8.
