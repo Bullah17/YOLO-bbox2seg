@@ -5,3 +5,6 @@ Tested with a dataset to be trained with yolov8.
 
 ## Installation
 This requires the ultralytics pip package, so you can just follow the installation instructions from the [Ultralytics Repository](https://github.com/ultralytics/ultralytics)
+
+## Usage
+``python bbox2seg.py IMAGE_DIRECTORY LABEL_DIRECTORY``
