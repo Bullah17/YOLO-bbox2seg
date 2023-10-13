@@ -5,6 +5,7 @@ import sys
 import torch
 from pathlib import Path
 from ultralytics import SAM
+import yaml
 
 def yolo_to_pixel_coordinates(yolo_values, image_width, image_height):
     _, center_x, center_y, width, height = yolo_values
@@ -57,9 +58,19 @@ def sam_annotate(result, sam_model, label_output_dir, device=''):
                 segment = map(str, segments[i].reshape(-1).tolist())
                 f.write(f'{class_ids[i]} ' + ' '.join(segment) + '\n')
         return outfile
+    
+def generate_colors(n):  
+    colors = {}  
+    for i in range(n):  
+        angle = 2 * np.pi * i / n  
+        r = int(255 * max(0, np.cos(angle)))  
+        g = int(255 * max(0, np.cos(angle + 2 * np.pi / 3)))  
+        b = int(255 * max(0, np.cos(angle + 4 * np.pi / 3)))  
+        colors[i] = (r, g, b)  
+    return colors  
 
-def visualise_segment(seg_label_path, seg_img_dir, image_path, image_file):
-    colors = {0 : (0, 0, 255), 1 : (255, 0, 0), 2 : (0, 255, 0), 3 : (255, 255, 0), 4 : (255, 0, 255), 5 : (0, 255, 255)}
+def visualise_segment(seg_label_path, seg_img_dir, image_path, image_file, num_classes):
+    colors = generate_colors(num_classes)
     img = cv2.imread(image_path)
     img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
     with open(seg_label_path, 'r') as f:
@@ -73,21 +84,48 @@ def visualise_segment(seg_label_path, seg_img_dir, image_path, image_file):
     img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     cv2.imwrite(os.path.join(seg_img_dir, image_file), img)
 
+def get_num_classes(yaml_file):  
+    with open(yaml_file, 'r') as stream:  
+        yaml_content = yaml.safe_load(stream)  
+        return yaml_content['nc']  
+
 if __name__ == '__main__':
     try: 
-        image_dir = sys.argv[1]
-        label_dir = sys.argv[2]
+        data_yaml = sys.argv[1]
+        image_dir = sys.argv[2]
+        label_dir = sys.argv[3]
+        sanity = sys.argv[4]
+        is_large = sys.argv[5]
+    except IndexError:
+        print("Usage: python bbox2seg.py YAML_PATH IMAGE_DIRECTORY LABEL_DIRECTORY SEG_IMAGES(y/n) USE_LARGE(y/n)\nPlease input required data.")
+        data_yaml = input("Enter path to data.yaml for dataset: ")
+        image_dir = input("Enter path to directory containing images: ")
+        label_dir = input("Enter path to directory containg yolo-format labels: ")
+        sanity = input("Output a copy of all images with segmentation masks applied? (y/n): ")
+        is_large = input("Use SAM (Large) instead of SAM (Base)? (y/n): ")
+    try:
+        if sanity == 'y':
+            print("Output of images with masked applied is enabled.")
+            seg_img_dir = Path(str(image_dir)).parent / 'seg_images'
+            Path(seg_img_dir).mkdir(exist_ok=True, parents=True)
+            print(f"Saving output images to {seg_img_dir}")
         label_out_dir = Path(str(image_dir)).parent / 'seg_labels'
         Path(label_out_dir).mkdir(exist_ok=True, parents=True)
-        seg_img_dir = Path(str(image_dir)).parent / 'seg_images'
-        Path(seg_img_dir).mkdir(exist_ok=True, parents=True)
-        sam_model = SAM('sam_b.pt')
+        print(f"Saving output labels to {label_out_dir}")
+        if is_large == 'y':
+            sam_model = SAM('sam_l.pt')
+            print("Using SAM (Large) model.")
+        else:
+            sam_model = SAM('sam_b.pt')
+            print("Using SAM (Base) model.")
         for image_file, label_file in zip(os.listdir(image_dir), os.listdir(label_dir)):
             image_path = os.path.join(image_dir, image_file)
             label_path = os.path.join(label_dir, label_file)
             result = convert_to_results(image_path, label_path)
+            num_classes = get_num_classes(data_yaml)
             seg_label = sam_annotate(result, sam_model, label_out_dir)
-            visualise_segment(seg_label, seg_img_dir, image_path, image_file)
-
-    except IndexError:
-        print("Usage: python bbox2seg.py IMAGE DIRECTORY LABEL DIRECTORY")
+            if sanity == 'y':
+                visualise_segment(seg_label, seg_img_dir, image_path, image_file, num_classes)
+    except Exception as e:
+        print(f"{e}\nAborting segmentation")
+        sys.exit()
